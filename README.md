@@ -4,7 +4,7 @@
 
 ## Features
 
-- **`search()`**: Perform a keyword search for drug-target-indication interactions.
+- **`search()`**: Perform a keyword search for drug, target or indication.
 - **`get_interactions()`**: Retrieve detailed interaction data for drugs, targets, or diseases based on unique identifiers (ChEMBL ID, Ensembl ID, or EFO ID).
 
 ## Installation
@@ -18,8 +18,6 @@ install.packages("devtools")
 # Install DTII package from GitHub
 devtools::install_github("WhyLIM/DTII")
 ```
-
-Replace `"your_username"` with your actual GitHub username.
 
 ## Usage
 
