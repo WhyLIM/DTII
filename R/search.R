@@ -31,15 +31,20 @@
 #'
 #' @import httr jsonlite
 #' @export
-search <- function(keywords, size = 10000) {
+search <- function(keywords = NULL, size = 10000) {
 
-  # 如果用户输入的 size 超过 10000，强制将其设置为 10000
+  # Check if keyword is empty
+  if (is.null(keywords)) {
+    stop("Please provide a keyword to query.")
+  }
+
+  # If the size entered by the user exceeds 10000, force it to be set to 10000
   if (size > 10000) {
     size <- 10000
     message("Size exceeds the limit of the Open Targets API and has been automatically set to 10000.")
   }
 
-  # GraphQL 查询字符串
+  # GraphQL query string
   query_string <- '
   query searchEntities($keywords: String!, $size: Int!) {
     search(queryString: $keywords, page: {index: 0, size: $size}) {
@@ -64,13 +69,13 @@ search <- function(keywords, size = 10000) {
   }
   '
 
-  # 变量，包括 size 和 keywords
+  # variables
   variables <- list(keywords = keywords, size = size)
 
-  # 基础 URL
+  # base URL
   base_url <- "https://api.platform.opentargets.org/api/v4/graphql"
 
-  # 发送请求
+  # Send request
   tryCatch({
     response <- POST(
       url = base_url,
@@ -78,52 +83,52 @@ search <- function(keywords, size = 10000) {
       encode = "json"
     )
 
-    # 检查响应状态码
+    # Check response status code
     if (http_status(response)$category != "Success") {
       stop("Request failed: ", http_status(response)$message)
     }
 
-    # 解析 JSON 响应
+    # Parse JSON response
     api_response <- fromJSON(content(response, "text"))
 
-    # 获取总结果数
+    # Get the total number of results
     total_hits <- api_response[["data"]][["search"]][["total"]]
 
-    # 如果总结果数超过 10000，提示用户
+    # If the total number of results exceeds 10,000, prompt the user
     if (total_hits > 10000) {
       message(sprintf("%d results found. Due to API limitations, only the first 10,000 are shown.", total_hits))
     }
 
-    # 每种类型实体的数量
+    # Number of entities of each type
     entities_df <- api_response[["data"]][["search"]][["aggregations"]][["entities"]]
 
-    # 创建一个空列表，用于存储 categories 列中的 data.frame
+    # Create an empty list to store the categories column in the data.frame
     results_list <- list()
 
-    # 遍历 api_response，将 categories 中的每个 data.frame 存入列表，并以 name 列的值命名
+    # Traverse api_response, store each data.frame in categories into a list, and name it with the value of the name column
     for (i in seq_along(entities_df$name)) {
-      category_name <- entities_df$name[i]   # 取出 name 列的值
-      categories_df <- entities_df$categories[[i]]  # 取出 categories 列的 data.frame
+      category_name <- entities_df$name[i]   # Get the value of the name column
+      categories_df <- entities_df$categories[[i]]  # Get the data.frame of categories column
 
-      # 将 data.frame 存入列表，并命名为 name 列的值
+      # Save data.frame into a list and name it the value of the name column
       results_list[[category_name]] <- categories_df
     }
 
-    # 命中列表
+    # hit list
     hits_df <- api_response[["data"]][["search"]][["hits"]]
     results_list$hits <- hits_df
 
-    # 返回解析后的数据列表
+    # Returns the parsed data list
     return(results_list)
 
   }, error = function(e) {
-    # 捕捉请求异常并返回错误信息
+    # Capture request exceptions and return error information
     message <- paste("Request failed for keywords", keywords, ":", e$message)
     message(message)
     return(list(error = e$message))
 
   }, warning = function(w) {
-    # 捕捉解析警告
+    # Catching parsing warnings
     message <- paste("Warning occurred:", w$message)
     message(message)
     return(list(error = w$message))

@@ -2,7 +2,7 @@ Package: DTII
 Title: Drug-Target-Indication Interaction Query Package
 Version: 0.1.0
 Authors@R: 
-    person("Min", "Li", "mli.bio@outlook.com", role = c("aut", "cre"),
+    person(given = "Min", family = "Li", email = "mli.bio@outlook.com", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0003-9757-6822"))
 Description: The DTII package provides functions to query interactions between drugs, targets, and diseases using the Open Targets Platform GraphQL API. 
     It supports searching for drug-target-indication interactions and retrieving detailed information on known drugs and their related diseases and targets.

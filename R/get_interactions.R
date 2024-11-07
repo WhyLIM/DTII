@@ -43,7 +43,7 @@
 #' @export
 get_interactions <- function(query_id, id_type) {
 
-  # 构建 GraphQL 查询字符串函数
+  # Building a GraphQL query string function
   get_query_string <- function(id_type) {
     queries <- list(
       drug = '
@@ -116,7 +116,7 @@ get_interactions <- function(query_id, id_type) {
     return(queries[[id_type]])
   }
 
-  # 获取对应的 GraphQL 查询字符串
+  # Get the corresponding GraphQL query string
   query_string <- get_query_string(id_type)
 
   if (is.null(query_string)) {
@@ -124,13 +124,13 @@ get_interactions <- function(query_id, id_type) {
     return(list(error = sprintf("Invalid id_type: %s", id_type)))
   }
 
-  # 变量
+  # variable
   variables <- list(query_id = query_id)
 
-  # 基础 URL
+  # base URL
   base_url <- "https://api.platform.opentargets.org/api/v4/graphql"
 
-  # 发送请求
+  # Send request
   tryCatch({
     response <- POST(
       url = base_url,
@@ -138,30 +138,30 @@ get_interactions <- function(query_id, id_type) {
       encode = "json"
     )
 
-    # 检查响应状态码
+    # Check response status code
     if (http_status(response)$category != "Success") {
       stop(sprintf("Request failed: %s", http_status(response)$message))
     }
 
-    # 解析 JSON 响应
+    # Parse JSON response
     api_response <- fromJSON(content(response, "text"))
 
-    # 根据 id_type 动态选择字段
+    # Dynamically select fields based on id_type
     result <- switch(id_type,
                      drug = api_response[["data"]][["drug"]][["knownDrugs"]][["rows"]],
                      target = api_response[["data"]][["target"]][["knownDrugs"]][["rows"]],
                      disease = api_response[["data"]][["disease"]][["knownDrugs"]][["rows"]])
 
-    # 返回解析后的数据
+    # Return parsed data
     return(result)
 
   }, error = function(e) {
-    # 捕捉请求异常并返回错误信息
+    # Capture request exceptions and return error information
     message(sprintf("Request failed for query_id %s, id_type %s: %s", query_id, id_type, e$message))
     return(list(error = e$message))
 
   }, warning = function(w) {
-    # 捕捉解析警告
+    # Catching parsing warnings
     message(sprintf("Warning occurred for query_id %s, id_type %s: %s", query_id, id_type, w$message))
     return(list(error = w$message))
   })
